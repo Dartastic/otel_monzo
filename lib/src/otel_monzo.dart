@@ -2,7 +2,6 @@
 // Copyright 2025-2026 Mindful Software LLC d/b/a Dartastic.io, All rights reserved.
 
 import 'package:dartastic_opentelemetry/dartastic_opentelemetry.dart';
-import 'package:dartastic_opentelemetry_api/dartastic_opentelemetry_api.dart';
 
 import 'otel_monzo_suppression.dart';
 
@@ -52,48 +51,62 @@ Future<T> tracedMonzo<T>({
   final t = tracer ?? OTel.tracerProvider().getTracer('otel_monzo');
   final span = t.startSpan('monzo $operation', kind: SpanKind.client);
   try {
-    span.setStringAttribute('rpc.system', 'monzo');
+    span.addAttributes(
+        OTel.attributes([OTel.attributeString('rpc.system', 'monzo')]));
     final r = await invoke();
     final res = r.result;
     if (res != null) {
       if (res.userId != null) {
-        span.setStringAttribute('user.id', res.userId!);
+        span.addAttributes(
+            OTel.attributes([OTel.attributeString('user.id', res.userId!)]));
       }
       if (res.accountId != null) {
-        span.setStringAttribute('monzo.account.id', res.accountId!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('monzo.account.id', res.accountId!)]));
       }
       if (res.potId != null) {
-        span.setStringAttribute('monzo.pot.id', res.potId!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('monzo.pot.id', res.potId!)]));
       }
       if (res.transactionId != null) {
-        span.setStringAttribute('monzo.transaction.id', res.transactionId!);
+        span.addAttributes(OTel.attributes([
+          OTel.attributeString('monzo.transaction.id', res.transactionId!)
+        ]));
       }
       if (res.category != null) {
-        span.setStringAttribute('monzo.transaction.category', res.category!);
+        span.addAttributes(OTel.attributes([
+          OTel.attributeString('monzo.transaction.category', res.category!)
+        ]));
       }
       if (res.amount != null) {
-        span.setDoubleAttribute('monzo.amount', res.amount!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeDouble('monzo.amount', res.amount!)]));
       }
       if (res.currency != null) {
-        span.setStringAttribute('monzo.currency', res.currency!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('monzo.currency', res.currency!)]));
       }
       if (res.status != null) {
-        span.setStringAttribute('monzo.status', res.status!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('monzo.status', res.status!)]));
       }
       if (res.statusCode != null) {
-        span.setIntAttribute('http.response.status_code', res.statusCode!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeInt('http.response.status_code', res.statusCode!)]));
       }
       if (res.errorCode != null) {
-        span.setStringAttribute('monzo.error.code', res.errorCode!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('monzo.error.code', res.errorCode!)]));
       }
-      final fail =
-          res.errorCode != null ||
+      final fail = res.errorCode != null ||
           (res.statusCode != null && res.statusCode! >= 400);
       if (fail) {
-        span.setStringAttribute(
-          ErrorResource.errorType.key,
-          res.errorCode ?? 'monzo.error',
-        );
+        span.addAttributes(OTel.attributes([
+          OTel.attributeString(
+            ErrorResource.errorType.key,
+            res.errorCode ?? 'monzo.error',
+          )
+        ]));
         span.setStatus(SpanStatusCode.Error, res.errorMessage);
       }
     }
